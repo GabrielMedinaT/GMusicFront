@@ -1,15 +1,18 @@
-import React from "react";
-import { Album } from "../types/types";
+import React, { useEffect, useRef } from "react";
+import { Album, Song } from "../types/types";
 import { Swiper, SwiperSlide } from "swiper/react";
+import type { Swiper as SwiperType } from "swiper";
 import { EffectCoverflow } from "swiper/modules";
+
+import "swiper/css";
+import "swiper/css/effect-coverflow";
 import "./AlbumList.css";
 
 interface AlbumListProps {
   albums: Album[];
   onAlbumClick: (album: Album) => void;
   selectedAlbumId: string | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onSongClick: (song: any) => void;
+  onSongClick: (song: Song) => void;
 }
 
 const AlbumList: React.FC<AlbumListProps> = ({
@@ -18,38 +21,60 @@ const AlbumList: React.FC<AlbumListProps> = ({
   selectedAlbumId,
   onSongClick,
 }) => {
+  const swiperRef = useRef<SwiperType | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+
+  // ✅ Scroll con rueda: forzamos slideNext/slidePrev
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+
+    let locked = false;
+
+    const onWheel = (e: WheelEvent) => {
+      // Si estás sobre el carrusel, consumimos el wheel
+      e.preventDefault();
+
+      if (!swiperRef.current) return;
+      if (locked) return;
+
+      locked = true;
+
+      if (e.deltaY > 0) swiperRef.current.slideNext();
+      else swiperRef.current.slidePrev();
+
+      // throttle para que no vaya a mil por hora
+      setTimeout(() => {
+        locked = false;
+      }, 250);
+    };
+
+    // importante: passive:false para poder hacer preventDefault
+    el.addEventListener("wheel", onWheel, { passive: false });
+
+    return () => {
+      el.removeEventListener("wheel", onWheel as any);
+    };
+  }, []);
+
   return (
-    <div className="albums-wrapper">
+    <div className="albums-wrapper" ref={wrapperRef}>
       <Swiper
         modules={[EffectCoverflow]}
+        onSwiper={(s) => (swiperRef.current = s)}
         effect="coverflow"
-        grabCursor={true}
-        centeredSlides={true}
+        centeredSlides
         slidesPerView="auto"
+        grabCursor
+        speed={450}
         coverflowEffect={{
-          rotate: 0,
-          stretch: -50,
-          depth: 150,
+          rotate: 25,
+          stretch: 0,
+          depth: 120,
           modifier: 1,
           slideShadows: false,
         }}
         className="album-swiper"
-        breakpoints={{
-          640: {
-            coverflowEffect: {
-              stretch: -30,
-              depth: 200,
-              modifier: 1.5,
-            },
-          },
-          1024: {
-            coverflowEffect: {
-              stretch: -20,
-              depth: 300,
-              modifier: 2,
-            },
-          },
-        }}
       >
         {albums.map((album) => (
           <SwiperSlide key={album.id}>
@@ -67,8 +92,13 @@ const AlbumList: React.FC<AlbumListProps> = ({
               >
                 <div
                   className="front"
-                  style={{ backgroundImage: `url(${album.cover_url})` }}
+                  style={{
+                    backgroundImage: album.cover_url
+                      ? `url(${album.cover_url})`
+                      : undefined,
+                  }}
                 />
+
                 <div className="back">
                   <ul className="song-list">
                     {album.songs.map((song) => (

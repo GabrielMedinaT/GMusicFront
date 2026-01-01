@@ -1,11 +1,12 @@
 import React, { useRef, useEffect, useState } from "react";
 import { Song } from "../types/types";
+import "./MusicPlayer.css";
 
 interface MusicPlayerProps {
   song: Song | null;
-  songs: Song[]; // Añadimos la lista completa
-  onChangeSong: (index: number) => void; // Callback para cambiar canción
-  currentIndex: number; // Índice actual
+  songs: Song[];
+  onChangeSong: (index: number) => void;
+  currentIndex: number;
 }
 
 const MusicPlayer: React.FC<MusicPlayerProps> = ({
@@ -15,12 +16,13 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
   currentIndex,
 }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
-  //const baseUrl = "https://musica.gmtdev.duckdns.org";
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
+  // Limpieza al desmontar
   useEffect(() => {
     return () => {
       if (audioRef.current) {
@@ -30,48 +32,42 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
     };
   }, []);
 
+  // Cargar nueva canción
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
+    if (!audioRef.current) return;
 
-    if (song && audioRef.current) {
-      const songUrl = getSongUrl(); // Usar `song.file`
-      console.log("Intentando cargar URL:", songUrl, " ", song.file, " ");
+    audioRef.current.pause();
+    audioRef.current.currentTime = 0;
+
+    if (song?.url) {
       setError(null);
 
-      audioRef.current.src = songUrl;
+      audioRef.current.src = song.url;
       audioRef.current.load();
-      const playPromise = audioRef.current.play();
 
-      if (playPromise !== undefined) {
-        playPromise.catch((err) => {
-          console.error("Reproducción automática prevenida:", err);
-          setError("Error al cargar la canción.");
+      audioRef.current
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch((err) => {
+          console.error("Reproducción automática bloqueada:", err);
+          setError("No se pudo reproducir la canción.");
         });
-      }
     }
   }, [song]);
 
-  const getSongUrl = () => {
-    if (!song || !song.url) return "";
-    console.log("Usando URL directa de la cancion:", song.url);
-    return song.url;
-  };
-
   const handlePlayPause = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play().catch((err) => {
-          console.error("Error al intentar reproducir:", err);
-          setError("Error al reproducir la canción.");
-        });
-      }
-      setIsPlaying(!isPlaying);
+    if (!audioRef.current) return;
+
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play().catch((err) => {
+        console.error("Error al reproducir:", err);
+        setError("Error al reproducir la canción.");
+      });
     }
+
+    setIsPlaying(!isPlaying);
   };
 
   const handleTimeUpdate = () => {
@@ -86,34 +82,32 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
     }
   };
 
-  const formatTime = (time: number) => {
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60)
-      .toString()
-      .padStart(2, "0");
-    return `${minutes}:${seconds}`;
-  };
-
   const handleSeek = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (audioRef.current) {
-      const newTime = parseFloat(event.target.value);
+      const newTime = Number(event.target.value);
       audioRef.current.currentTime = newTime;
       setCurrentTime(newTime);
     }
   };
 
   const handleNext = () => {
-    if (songs.length > 0) {
-      const nextIndex = (currentIndex + 1) % songs.length;
-      onChangeSong(nextIndex);
-    }
+    if (songs.length === 0) return;
+    const nextIndex = (currentIndex + 1) % songs.length;
+    onChangeSong(nextIndex);
   };
 
   const handlePrevious = () => {
-    if (songs.length > 0) {
-      const prevIndex = (currentIndex - 1 + songs.length) % songs.length;
-      onChangeSong(prevIndex);
-    }
+    if (songs.length === 0) return;
+    const prevIndex = (currentIndex - 1 + songs.length) % songs.length;
+    onChangeSong(prevIndex);
+  };
+
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60)
+      .toString()
+      .padStart(2, "0");
+    return `${minutes}:${seconds}`;
   };
 
   return (
@@ -125,6 +119,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
             <p>{song.artist}</p>
             <p>{song.album}</p>
           </div>
+
           <div className="audio-controls">
             <div className="buttons-row">
               <button onClick={handlePrevious}>⏮️</button>
@@ -133,14 +128,15 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
               </button>
               <button onClick={handleNext}>⏭️</button>
             </div>
+
             <div className="progress-bar-container">
               <input
                 type="range"
-                min="0"
-                max={duration}
+                min={0}
+                max={duration || 0}
                 value={currentTime}
-                className="progress-bar"
                 onChange={handleSeek}
+                className="progress-bar"
               />
               <div className="time-info">
                 <span>{formatTime(currentTime)}</span> /{" "}
@@ -149,20 +145,18 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
             </div>
           </div>
 
-          <div className="audio-element">
-            <audio
-              ref={audioRef}
-              onTimeUpdate={handleTimeUpdate}
-              onLoadedMetadata={handleLoadedMetadata}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-              key={song.file} // Usar `song.file` como clave
-              onError={(e) => {
-                console.error("Error de reproducción:", e);
-                setError("Error al cargar la canción.");
-              }}
-            />
-          </div>
+          <audio
+            ref={audioRef}
+            onTimeUpdate={handleTimeUpdate}
+            onLoadedMetadata={handleLoadedMetadata}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            onError={(e) => {
+              console.error("Error de reproducción:", e);
+              setError("Error al cargar la canción.");
+            }}
+            key={song.id}
+          />
         </div>
       ) : (
         <p>Selecciona una canción para escuchar</p>
