@@ -1,29 +1,31 @@
 import React, { useState, useEffect } from "react";
 import AlbumList from "./components/AlbumList";
 import MusicPlayer from "./components/MusicPlayer";
-import { Album, Song } from "./types/types"; // Importar los tipos
+import { Album, Song } from "./types/types";
 
 const App: React.FC = () => {
   const [albums, setAlbums] = useState<Album[]>([]);
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedAlbumSongs, setSelectedAlbumSongs] = useState<Song[] | null>(null);
-  const [selectedAlbumTitle, setSelectedAlbumTitle] = useState<string | null>(null);
+  const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [currentSongList, setCurrentSongList] = useState<Song[]>([]);
 
   const fetchSongs = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("https://musica.gmtdev.duckdns.org/api/music");
+      const response = await fetch(
+        "https://musica.gmtdev.duckdns.org/api/music"
+      );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const rawSongs = await response.json();
-      console.log('rawSongs:', rawSongs);
+      console.log("rawSongs:", rawSongs);
 
-      // Verificar que 'tracks' sea un array
       if (!Array.isArray(rawSongs.tracks)) {
         throw new Error("La propiedad 'tracks' no es un array");
       }
@@ -39,25 +41,28 @@ const App: React.FC = () => {
             id: albumKey,
             album: raw.album,
             artist: raw.artist,
-            cover_url: raw.cover ? `data:image/jpeg;base64,${raw.cover}` : undefined,
+            cover_url: raw.cover
+              ? `data:image/jpeg;base64,${raw.cover}`
+              : undefined,
             songs: [],
           });
         }
 
-        // Asegúrate de que 'url' esté presente y agregue el valor correspondiente
         albumsMap.get(albumKey)!.songs.push({
           id: index.toString(),
           title: raw.title,
-          file: raw.filePath,  // Verifica que este campo sea correcto
+          file: raw.filePath,
           album: raw.album,
           artist: raw.artist,
-          cover_url: raw.cover ? `data:image/jpeg;base64,${raw.cover}` : undefined,
-          url: raw.url, // Aquí es donde agregamos 'url'
+          cover_url: raw.cover
+            ? `data:image/jpeg;base64,${raw.cover}`
+            : undefined,
+          url: raw.url,
         });
       });
 
       setAlbums(Array.from(albumsMap.values()));
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       setError(error.message);
     } finally {
@@ -70,39 +75,62 @@ const App: React.FC = () => {
   }, []);
 
   const handleAlbumClick = (album: Album) => {
-    setSelectedAlbumSongs(album.songs);
-    setSelectedAlbumTitle(album.album);
+    if (selectedAlbumId === album.id) {
+      setSelectedAlbumId(null); // Si el álbum ya está seleccionado, lo deseleccionamos
+    } else {
+      setSelectedAlbumId(album.id); // Si no, lo seleccionamos
+    }
+  };
+  const handleSongClick = (song: Song) => {
+    const album = albums.find((a) => a.songs.some((s) => s.id === song.id));
+    if (album) {
+      setCurrentSongList(album.songs);
+      const index = album.songs.findIndex((s) => s.id === song.id);
+      setCurrentIndex(index);
+      setCurrentSong(song);
+    }
   };
 
-  const handleCloseAlbumSongs = () => {
-    setSelectedAlbumSongs(null);
-    setSelectedAlbumTitle(null);
+  const handleClickOutside = (e: MouseEvent) => {
+    if (!(e.target as HTMLElement).closest(".album-container")) {
+      setSelectedAlbumId(null); // Cierra el álbum si se hace clic fuera
+    }
   };
+
+  useEffect(() => {
+    window.addEventListener("click", handleClickOutside as EventListener);
+    return () => {
+      window.removeEventListener("click", handleClickOutside as EventListener);
+    };
+  }, []);
 
   if (loading) return <div>Cargando álbumes...</div>;
   if (error) return <div>Error al cargar los álbumes: {error}</div>;
+  const handleChangeSong = (index: number) => {
+    const song = currentSongList[index];
+    if (song) {
+      setCurrentIndex(index);
+      setCurrentSong(song);
+    }
+  };
 
   return (
     <div className="App">
-      <h1>GMusic - Tu reproductor de música</h1>
+      <h1>GMusic</h1>
 
-      <AlbumList albums={albums} onAlbumClick={handleAlbumClick} />
+      <AlbumList
+        albums={albums}
+        onAlbumClick={handleAlbumClick}
+        selectedAlbumId={selectedAlbumId}
+        onSongClick={handleSongClick}
+      />
 
-      {selectedAlbumSongs && (
-        <div style={{ marginTop: "20px", border: "1px solid #eee", padding: "15px" }}>
-          <h2>Canciones de {selectedAlbumTitle}</h2>
-          <ul>
-            {selectedAlbumSongs.map((song) => (
-              <li key={song.id} style={{ cursor: "pointer" }} onClick={() => setCurrentSong(song)}>
-                {song.title}
-              </li>
-            ))}
-          </ul>
-          <button onClick={handleCloseAlbumSongs}>Cerrar</button>
-        </div>
-      )}
-
-      <MusicPlayer song={currentSong} />
+      <MusicPlayer
+        song={currentSong}
+        songs={currentSongList}
+        currentIndex={currentIndex}
+        onChangeSong={handleChangeSong}
+      />
     </div>
   );
 };

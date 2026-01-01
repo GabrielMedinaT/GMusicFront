@@ -3,9 +3,17 @@ import { Song } from "../types/types";
 
 interface MusicPlayerProps {
   song: Song | null;
+  songs: Song[]; // Añadimos la lista completa
+  onChangeSong: (index: number) => void; // Callback para cambiar canción
+  currentIndex: number; // Índice actual
 }
 
-const MusicPlayer: React.FC<MusicPlayerProps> = ({ song }) => {
+const MusicPlayer: React.FC<MusicPlayerProps> = ({
+  song,
+  songs,
+  onChangeSong,
+  currentIndex,
+}) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   //const baseUrl = "https://musica.gmtdev.duckdns.org";
   const [isPlaying, setIsPlaying] = useState(false);
@@ -30,7 +38,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ song }) => {
 
     if (song && audioRef.current) {
       const songUrl = getSongUrl(); // Usar `song.file`
-      console.log("Intentando cargar URL:", songUrl , " " , song.file , " ");
+      console.log("Intentando cargar URL:", songUrl, " ", song.file, " ");
       setError(null);
 
       audioRef.current.src = songUrl;
@@ -51,7 +59,6 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ song }) => {
     console.log("Usando URL directa de la cancion:", song.url);
     return song.url;
   };
-  
 
   const handlePlayPause = () => {
     if (audioRef.current) {
@@ -95,6 +102,20 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ song }) => {
     }
   };
 
+  const handleNext = () => {
+    if (songs.length > 0) {
+      const nextIndex = (currentIndex + 1) % songs.length;
+      onChangeSong(nextIndex);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (songs.length > 0) {
+      const prevIndex = (currentIndex - 1 + songs.length) % songs.length;
+      onChangeSong(prevIndex);
+    }
+  };
+
   return (
     <div className="music-player">
       {song ? (
@@ -105,9 +126,13 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ song }) => {
             <p>{song.album}</p>
           </div>
           <div className="audio-controls">
-            <button onClick={handlePlayPause}>
-              {isPlaying ? "Pause" : "Play"}
-            </button>
+            <div className="buttons-row">
+              <button onClick={handlePrevious}>⏮️</button>
+              <button onClick={handlePlayPause}>
+                {isPlaying ? "⏸️" : "▶️"}
+              </button>
+              <button onClick={handleNext}>⏭️</button>
+            </div>
             <div className="progress-bar-container">
               <input
                 type="range"
@@ -123,6 +148,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ song }) => {
               </div>
             </div>
           </div>
+
           <div className="audio-element">
             <audio
               ref={audioRef}
