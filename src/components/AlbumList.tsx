@@ -1,11 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef } from "react";
 import { Album, Song } from "../types/types";
 import { Swiper, SwiperSlide } from "swiper/react";
 import type { Swiper as SwiperType } from "swiper";
 import { EffectCoverflow } from "swiper/modules";
 
-import "swiper/css";
-import "swiper/css/effect-coverflow";
+
 import "./AlbumList.css";
 
 interface AlbumListProps {

@@ -69,6 +69,18 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
 
     setIsPlaying(!isPlaying);
   };
+  const handleEnded = () => {
+  if (songs.length === 0) return;
+
+  const nextIndex = currentIndex + 1;
+
+  if (nextIndex < songs.length) {
+    onChangeSong(nextIndex);
+  } else {
+    setIsPlaying(false);
+  }
+};
+
 
   const handleTimeUpdate = () => {
     if (audioRef.current) {
@@ -149,6 +161,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
             ref={audioRef}
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
+            onEnded={handleEnded}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
             onError={(e) => {

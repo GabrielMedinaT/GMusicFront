@@ -16,13 +16,16 @@
   transform: translateX(-50%);
   width: 90%;
   max-width: 600px;
-  background: rgba(20, 20, 20, 0.85);
+  background: rgba(20, 20, 20, 0.75);
   color: #fff;
-  border-radius: 20px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  border-radius: 22px;
   padding: 20px 25px;
-  backdrop-filter: blur(10px);
-  z-index: 100; /* Asegura que esté por encima de reflejos */
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 15px 40px rgba(0, 0, 0, 0.45);
+  z-index: 100;
   pointer-events: auto;
 }
 
@@ -34,35 +37,76 @@
 
 .song-info h3 {
   font-size: 1.3rem;
-  margin: 0;
 }
 
 .song-info p {
   margin: 2px 0;
-  color: #bbb;
+  color: #bdbdbd;
   font-size: 0.9rem;
 }
 
 .audio-controls {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
 }
 
 .audio-controls button {
-  background-color: #1db954;
-  color: white;
-  border: none;
-  padding: 10px 20px;
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.25),
+    rgba(255, 255, 255, 0.05)
+  );
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 12px 26px;
   border-radius: 9999px;
   font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.3s;
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    inset 0 -6px 12px rgba(0, 0, 0, 0.25),
+    0 10px 25px rgba(0, 0, 0, 0.35);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.3s ease;
+  overflow: hidden;
+}
+
+.audio-controls button::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at top left,
+    rgba(255, 255, 255, 0.45),
+    transparent 60%
+  );
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 .audio-controls button:hover {
-  background-color: #1aa34a;
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.5),
+    inset 0 -6px 14px rgba(0, 0, 0, 0.3),
+    0 14px 35px rgba(0, 0, 0, 0.45);
+}
+
+.audio-controls button:active {
+  transform: translateY(0);
+  box-shadow:
+    inset 0 3px 8px rgba(0, 0, 0, 0.45),
+    0 6px 15px rgba(0, 0, 0, 0.35);
 }
 
 .progress-bar-container {
@@ -77,25 +121,43 @@
   appearance: none;
   height: 6px;
   border-radius: 3px;
-  background: #555;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.25),
+    rgba(255, 255, 255, 0.05)
+  );
   outline: none;
-  transition: background 0.3s;
+  backdrop-filter: blur(6px);
 }
 
 .progress-bar::-webkit-slider-thumb {
   appearance: none;
-  width: 12px;
-  height: 12px;
-  background: #1db954;
+  width: 14px;
+  height: 14px;
+  background: radial-gradient(
+    circle at top left,
+    #ffffff,
+    #1db954
+  );
   border-radius: 50%;
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.6),
+    0 3px 8px rgba(0, 0, 0, 0.4);
   cursor: pointer;
 }
 
 .progress-bar::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
-  background: #1db954;
+  width: 14px;
+  height: 14px;
+  background: radial-gradient(
+    circle at top left,
+    #ffffff,
+    #1db954
+  );
   border-radius: 50%;
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.6),
+    0 3px 8px rgba(0, 0, 0, 0.4);
   cursor: pointer;
 }
 
