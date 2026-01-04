@@ -9,6 +9,9 @@ import {
   verifyReadPermission,
 } from "./utils/folderStore";
 import "./App.css";
+import EditSongModal from "./components/EditSongModal";
+import { getSongEdits } from "./utils/songEditsStore";
+
 
 const AUDIO_EXTENSIONS = ["mp3", "ogg", "wav", "flac", "m4a", "aac", "webm"];
 const COVER_NAMES = ["cover", "folder", "front", "album", "artwork", "picture"];
@@ -21,6 +24,8 @@ const App: React.FC = () => {
   const [currentSongList, setCurrentSongList] = useState<Song[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const getAudioFilesRecursive = async (
     dir: FileSystemDirectoryHandle
@@ -80,15 +85,16 @@ const App: React.FC = () => {
         metadata = null;
       }
 
-      const title =
+      const originalTitle =
         metadata?.common.title &&
         metadata.common.title !== metadata.common.album
           ? metadata.common.title
           : file.name.replace(/\.[^/.]+$/, "");
 
-      const artist = metadata?.common.artist || "Desconocido";
-      const albumName = metadata?.common.album || "Álbum";
-      const albumKey = `${albumName}__${artist}`;
+      const originalArtist = metadata?.common.artist || "Desconocido";
+      const originalAlbum = metadata?.common.album || "Álbum";
+
+      const albumKey = `${originalAlbum}__${originalArtist}`;
 
       if (!albumsMap.has(albumKey)) {
         let coverUrl: string | undefined;
@@ -105,18 +111,22 @@ const App: React.FC = () => {
 
         albumsMap.set(albumKey, {
           id: albumKey,
-          album: albumName,
-          artist,
+          album: originalAlbum,
+          artist: originalArtist,
           cover_url: coverUrl,
           songs: [],
         });
       }
 
+      const id = `${songId++}`;
+
+      const edits = await getSongEdits(id);
+
       albumsMap.get(albumKey)!.songs.push({
-        id: `${songId++}`,
-        title,
-        artist,
-        album: albumName,
+        id,
+        title: edits?.title ?? originalTitle,
+        artist: edits?.artist ?? originalArtist,
+        album: edits?.album ?? originalAlbum,
         file,
         url,
       });
@@ -133,7 +143,7 @@ const App: React.FC = () => {
         return;
       }
       const rootDir = await window.showDirectoryPicker();
-      await saveMusicFolderHandle( rootDir as FileSystemDirectoryHandle);
+      await saveMusicFolderHandle(rootDir as FileSystemDirectoryHandle);
       await loadMusicFromDirectory(rootDir as FileSystemDirectoryHandle);
     } catch (e) {
       console.error(e);
@@ -204,6 +214,11 @@ const App: React.FC = () => {
       })
       .filter(Boolean) as Album[];
   }, [albums, searchTerm]);
+  useEffect(() => {
+    if (!searchTerm) {
+      setShowSearch(false);
+    }
+  }, [searchTerm]);
 
   return (
     <div className="App">
@@ -220,7 +235,27 @@ const App: React.FC = () => {
           <li className="menu-item">
             Edición
             <ul className="submenu">
-              <li>Buscar</li>
+              <li
+                onClick={() => {
+                  setShowSearch(true);
+                }}
+              >
+                Buscar
+              </li>
+
+              <li
+                onClick={() => {
+                  if (currentSong) {
+                    setShowEditModal(true);
+                  }
+                }}
+                style={{
+                  opacity: currentSong ? 1 : 0.5,
+                  pointerEvents: currentSong ? "auto" : "none",
+                }}
+              >
+                Editar canción
+              </li>
             </ul>
           </li>
 
@@ -239,21 +274,22 @@ const App: React.FC = () => {
           </li>
         </ul>
       </nav>
-
-      <input
-        type="text"
-        placeholder="Buscar canción, álbum o artista"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        style={{
-          margin: "10px 0",
-          padding: "8px 12px",
-          width: "100%",
-          maxWidth: "400px",
-          borderRadius: "10px",
-          border: "1px solid #ccc",
-        }}
-      />
+      {showSearch && (
+        <input
+          type="text"
+          placeholder="Buscar canción, álbum o artista"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{
+            margin: "10px 0",
+            padding: "8px 12px",
+            width: "100%",
+            maxWidth: "400px",
+            borderRadius: "10px",
+            border: "1px solid #ccc",
+          }}
+        />
+      )}
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
@@ -270,6 +306,12 @@ const App: React.FC = () => {
         currentIndex={currentIndex}
         onChangeSong={handleChangeSong}
       />
+      {showEditModal && currentSong && (
+        <EditSongModal
+          song={currentSong}
+          onClose={() => setShowEditModal(false)}
+        />
+      )}
     </div>
   );
 };
