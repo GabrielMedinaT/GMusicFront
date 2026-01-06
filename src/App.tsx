@@ -12,7 +12,6 @@ import "./App.css";
 import EditSongModal from "./components/EditSongModal";
 import { getSongEdits } from "./utils/songEditsStore";
 
-
 const AUDIO_EXTENSIONS = ["mp3", "ogg", "wav", "flac", "m4a", "aac", "webm"];
 const COVER_NAMES = ["cover", "folder", "front", "album", "artwork", "picture"];
 
@@ -27,12 +26,15 @@ const App: React.FC = () => {
   const [showSearch, setShowSearch] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  const getAudioFilesRecursive = async (
-    dir: FileSystemDirectoryHandle
-  ): Promise<FileSystemFileHandle[]> => {
-    const result: FileSystemFileHandle[] = [];
+  // ─────────────────────────────────────────────────────────────
+  // File system helpers (ANY ON PURPOSE)
+  // ─────────────────────────────────────────────────────────────
 
-    for await (const entry of dir.values()) {
+  const getAudioFilesRecursive = async (dir: any): Promise<any[]> => {
+    const result: any[] = [];
+    const dirAny = dir as any;
+
+    for await (const entry of dirAny.values()) {
       if (entry.kind === "file") {
         const ext = entry.name.split(".").pop()?.toLowerCase();
         if (ext && AUDIO_EXTENSIONS.includes(ext)) {
@@ -47,10 +49,10 @@ const App: React.FC = () => {
     return result;
   };
 
-  const findCoverInFolder = async (
-    dir: FileSystemDirectoryHandle
-  ): Promise<string | undefined> => {
-    for await (const entry of dir.values()) {
+  const findCoverInFolder = async (dir: any): Promise<string | undefined> => {
+    const dirAny = dir as any;
+
+    for await (const entry of dirAny.values()) {
       if (entry.kind !== "file") continue;
 
       const name = entry.name.toLowerCase();
@@ -66,10 +68,11 @@ const App: React.FC = () => {
         return URL.createObjectURL(file);
       }
     }
+
     return undefined;
   };
 
-  const loadMusicFromDirectory = async (rootDir: FileSystemDirectoryHandle) => {
+  const loadMusicFromDirectory = async (rootDir: any) => {
     const files = await getAudioFilesRecursive(rootDir);
     const albumsMap = new Map<string, Album>();
     let songId = 0;
@@ -119,7 +122,6 @@ const App: React.FC = () => {
       }
 
       const id = `${songId++}`;
-
       const edits = await getSongEdits(id);
 
       albumsMap.get(albumKey)!.songs.push({
@@ -136,15 +138,23 @@ const App: React.FC = () => {
     setError(null);
   };
 
+  // ─────────────────────────────────────────────────────────────
+  // UI actions
+  // ─────────────────────────────────────────────────────────────
   const handleFolderSelect = async () => {
     try {
-      if (!window.showDirectoryPicker) {
+      const hasFSAccess =
+        "showDirectoryPicker" in window &&
+        typeof (window as any).showDirectoryPicker === "function";
+
+      if (!hasFSAccess) {
         setError("File System Access API no es soportada en este navegador.");
         return;
       }
-      const rootDir = await window.showDirectoryPicker();
-      await saveMusicFolderHandle(rootDir as FileSystemDirectoryHandle);
-      await loadMusicFromDirectory(rootDir as FileSystemDirectoryHandle);
+
+      const rootDir = await (window as any).showDirectoryPicker();
+      await saveMusicFolderHandle(rootDir);
+      await loadMusicFromDirectory(rootDir);
     } catch (e) {
       console.error(e);
       setError("No se pudo cargar la carpeta de música.");
@@ -159,7 +169,7 @@ const App: React.FC = () => {
       const hasPermission = await verifyReadPermission(handle);
       if (!hasPermission) return;
 
-      await loadMusicFromDirectory(handle as FileSystemDirectoryHandle);
+      await loadMusicFromDirectory(handle);
     };
 
     autoLoad();
@@ -185,6 +195,7 @@ const App: React.FC = () => {
       setCurrentSong(song);
     }
   };
+
   const filteredAlbums = useMemo(() => {
     if (!searchTerm.trim()) return albums;
 
@@ -214,11 +225,14 @@ const App: React.FC = () => {
       })
       .filter(Boolean) as Album[];
   }, [albums, searchTerm]);
+
   useEffect(() => {
-    if (!searchTerm) {
-      setShowSearch(false);
-    }
+    if (!searchTerm) setShowSearch(false);
   }, [searchTerm]);
+
+  // ─────────────────────────────────────────────────────────────
+  // Render
+  // ─────────────────────────────────────────────────────────────
 
   return (
     <div className="App">
@@ -235,20 +249,9 @@ const App: React.FC = () => {
           <li className="menu-item">
             Edición
             <ul className="submenu">
+              <li onClick={() => setShowSearch(true)}>Buscar</li>
               <li
-                onClick={() => {
-                  setShowSearch(true);
-                }}
-              >
-                Buscar
-              </li>
-
-              <li
-                onClick={() => {
-                  if (currentSong) {
-                    setShowEditModal(true);
-                  }
-                }}
+                onClick={() => currentSong && setShowEditModal(true)}
                 style={{
                   opacity: currentSong ? 1 : 0.5,
                   pointerEvents: currentSong ? "auto" : "none",
@@ -274,20 +277,13 @@ const App: React.FC = () => {
           </li>
         </ul>
       </nav>
+
       {showSearch && (
         <input
           type="text"
           placeholder="Buscar canción, álbum o artista"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          style={{
-            margin: "10px 0",
-            padding: "8px 12px",
-            width: "100%",
-            maxWidth: "400px",
-            borderRadius: "10px",
-            border: "1px solid #ccc",
-          }}
         />
       )}
 
@@ -306,6 +302,7 @@ const App: React.FC = () => {
         currentIndex={currentIndex}
         onChangeSong={handleChangeSong}
       />
+
       {showEditModal && currentSong && (
         <EditSongModal
           song={currentSong}

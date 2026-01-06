@@ -1,5 +1,3 @@
-declare type PermissionState = "granted" | "denied" | "prompt";
-
 declare interface FileSystemHandlePermissionDescriptor {
   mode?: "read" | "readwrite";
 }
@@ -7,18 +5,36 @@ declare interface FileSystemHandlePermissionDescriptor {
 declare interface FileSystemHandle {
   kind: "file" | "directory";
   name: string;
-  queryPermission?: (desc?: FileSystemHandlePermissionDescriptor) => Promise<PermissionState>;
-  requestPermission?: (desc?: FileSystemHandlePermissionDescriptor) => Promise<PermissionState>;
+
+  queryPermission(
+    desc?: FileSystemHandlePermissionDescriptor
+  ): Promise<PermissionState>;
+
+  requestPermission(
+    desc?: FileSystemHandlePermissionDescriptor
+  ): Promise<PermissionState>;
 }
 
 declare interface FileSystemFileHandle extends FileSystemHandle {
+  kind: "file";
   getFile(): Promise<File>;
 }
 
 declare interface FileSystemDirectoryHandle extends FileSystemHandle {
+  kind: "directory";
+
+  entries(): AsyncIterable<[string, FileSystemHandle]>;
   values(): AsyncIterable<FileSystemHandle>;
-  getDirectoryHandle(name: string, options?: { create?: boolean }): Promise<FileSystemDirectoryHandle>;
-  getFileHandle(name: string, options?: { create?: boolean }): Promise<FileSystemFileHandle>;
+
+  getDirectoryHandle(
+    name: string,
+    options?: { create?: boolean }
+  ): Promise<FileSystemDirectoryHandle>;
+
+  getFileHandle(
+    name: string,
+    options?: { create?: boolean }
+  ): Promise<FileSystemFileHandle>;
 }
 
 declare global {
