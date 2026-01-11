@@ -26,6 +26,14 @@ const App: React.FC = () => {
   const [showSearch, setShowSearch] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
+
+  //-------------------------------------------------------------
+  // Función de salir
+  //-------------------------------------------------------------
+  const handleExit = () => {
+    window.close();
+  };
+
   // ─────────────────────────────────────────────────────────────
   // File system helpers (ANY ON PURPOSE)
   // ─────────────────────────────────────────────────────────────
@@ -242,7 +250,7 @@ const App: React.FC = () => {
             Archivo
             <ul className="submenu">
               <li onClick={handleFolderSelect}>Abrir carpeta…</li>
-              <li>Salir</li>
+              <li onClick={handleExit} >Salir</li>
             </ul>
           </li>
 

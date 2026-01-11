@@ -1,114 +1,111 @@
-*,
-*:after,
-*:before {
+/* =========================
+   RESET & BASES
+   ========================= */
+*, *:after, *:before {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  text-decoration: none;
-  scroll-behavior: smooth;
-  list-style: none;
+  -webkit-tap-highlight-color: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
 }
 
+/* =========================
+   PLAYER CONTENEDOR (Base para PC)
+   ========================= */
 .music-player {
   position: fixed;
-  bottom: 20px;
+  bottom: 30px;
   left: 50%;
   transform: translateX(-50%);
   width: 90%;
-  max-width: 600px;
-  background: rgba(20, 20, 20, 0.75);
-  color: #fff;
-  border-radius: 22px;
-  padding: 20px 25px;
-  backdrop-filter: blur(14px) saturate(120%);
-  -webkit-backdrop-filter: blur(14px) saturate(120%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 15px 40px rgba(0, 0, 0, 0.45);
-  z-index: 100;
-  pointer-events: auto;
+  max-width: 450px;
+  /* Tu estilo Glassmorphism */
+  background: rgba(20, 20, 20, 0.9);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+  border-radius: 25px;
+  padding: 20px;
+  color: white;
+  z-index: 1000;
+  transition: all 0.3s ease;
 }
 
 .player-content {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 15px;
+  width: 100%;
+}
+
+/* =========================
+   INFO CANCIÓN (Texto)
+   ========================= */
+.song-info {
+  text-align: center;
+  /* Por defecto visible en PC */
+  display: block; 
 }
 
 .song-info h3 {
-  font-size: 1.3rem;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 4px;
 }
 
 .song-info p {
-  margin: 2px 0;
-  color: #bdbdbd;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
+  color: #bbb;
 }
 
+/* =========================
+   CONTROLES (SOLUCIÓN A LA FILA)
+   ========================= */
 .audio-controls {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  flex-direction: row;      /* ¡SIEMPRE EN FILA! */
   align-items: center;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
 }
 
 .audio-controls button {
-  position: relative;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.25),
-    rgba(255, 255, 255, 0.05)
-  );
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 12px 26px;
-  border-radius: 9999px;
-  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
   cursor: pointer;
-  backdrop-filter: blur(12px) saturate(150%);
-  -webkit-backdrop-filter: blur(12px) saturate(150%);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.4),
-    inset 0 -6px 12px rgba(0, 0, 0, 0.25),
-    0 10px 25px rgba(0, 0, 0, 0.35);
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    background 0.3s ease;
-  overflow: hidden;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+  font-size: 14px;
 }
 
-.audio-controls button::before {
-  content: "";
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(
-    circle at top left,
-    rgba(255, 255, 255, 0.45),
-    transparent 60%
-  );
-  opacity: 0.6;
-  pointer-events: none;
+/* Botón Play más grande */
+.audio-controls button:nth-child(2) {
+  width: 55px;
+  height: 55px;
+  background: white;
+  color: black;
+  font-size: 18px;
 }
 
 .audio-controls button:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.5),
-    inset 0 -6px 14px rgba(0, 0, 0, 0.3),
-    0 14px 35px rgba(0, 0, 0, 0.45);
+  transform: scale(1.05);
 }
 
 .audio-controls button:active {
-  transform: translateY(0);
-  box-shadow:
-    inset 0 3px 8px rgba(0, 0, 0, 0.45),
-    0 6px 15px rgba(0, 0, 0, 0.35);
+  transform: scale(0.95);
 }
 
+/* =========================
+   BARRA DE PROGRESO
+   ========================= */
 .progress-bar-container {
   width: 100%;
   display: flex;
@@ -118,52 +115,104 @@
 
 .progress-bar {
   width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
   appearance: none;
-  height: 6px;
-  border-radius: 3px;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.25),
-    rgba(255, 255, 255, 0.05)
-  );
   outline: none;
-  backdrop-filter: blur(6px);
 }
 
 .progress-bar::-webkit-slider-thumb {
   appearance: none;
-  width: 14px;
-  height: 14px;
-  background: radial-gradient(
-    circle at top left,
-    #ffffff,
-    #1db954
-  );
+  width: 12px;
+  height: 12px;
+  background: #ffb13d;
   border-radius: 50%;
-  box-shadow:
-    inset 0 1px 2px rgba(255, 255, 255, 0.6),
-    0 3px 8px rgba(0, 0, 0, 0.4);
-  cursor: pointer;
-}
-
-.progress-bar::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  background: radial-gradient(
-    circle at top left,
-    #ffffff,
-    #1db954
-  );
-  border-radius: 50%;
-  box-shadow:
-    inset 0 1px 2px rgba(255, 255, 255, 0.6),
-    0 3px 8px rgba(0, 0, 0, 0.4);
   cursor: pointer;
 }
 
 .time-info {
   display: flex;
   justify-content: space-between;
-  font-size: 0.8rem;
-  color: #aaa;
+  font-size: 0.7rem;
+  color: #888;
+  padding: 0 4px;
+}
+
+/* =========================================================
+   MÓVIL Y TABLET (AQUÍ ESTÁ LA MAGIA)
+   ========================================================= */
+@media (max-width: 768px) {
+  
+  /* 1. OCULTAR LA INFO (ARTISTA/CANCION) */
+  .song-info {
+    display: none !important;
+  }
+
+  /* 2. HACER EL REPRODUCTOR MÁS COMPACTO */
+  .music-player {
+    bottom: 20px;
+    width: 95%;
+    padding: 12px 15px; /* Menos padding */
+    border-radius: 20px;
+  }
+
+  .player-content {
+    gap: 8px; /* Menos espacio entre controles y barra */
+  }
+  
+  /* 3. AJUSTAR TAMAÑO DE BOTONES PARA MÓVIL */
+  .audio-controls {
+    gap: 25px; /* Un poco más separados para dedos */
+  }
+  
+  .audio-controls button {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .audio-controls button:nth-child(2) {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* =========================================================
+   LANDSCAPE (MÓVIL HORIZONTAL)
+   ========================================================= */
+@media (max-height: 500px) and (orientation: landscape) {
+  .music-player {
+    display: flex;
+    bottom: 10px;
+    width: 80%; /* No tan ancho */
+    max-width: 500px;
+    padding: 8px 20px;
+  }
+
+  /* Aseguramos que el texto siga oculto */
+  .song-info {
+    display: none !important;
+  }
+
+  /* Ponemos todo en una sola línea horizontal: [Botones] ---barra--- */
+  .player-content {
+    flex-direction: row; /* Fila horizontal */
+    align-items: center;
+    gap: 15px;
+  }
+
+  .audio-controls {
+    width: auto; /* Solo lo que ocupen los botones */
+    margin: 0;
+  }
+  .buttons-row {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+  }
+
+  .progress-bar-container {
+    flex: 1; /* La barra ocupa el resto del espacio */
+    margin-top: 5px; /* Pequeño ajuste visual */
+  }
 }

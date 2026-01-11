@@ -5,7 +5,6 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import type { Swiper as SwiperType } from "swiper";
 import { EffectCoverflow } from "swiper/modules";
 
-
 import "./AlbumList.css";
 
 interface AlbumListProps {
@@ -24,7 +23,7 @@ const AlbumList: React.FC<AlbumListProps> = ({
   const swiperRef = useRef<SwiperType | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 
-  // ✅ Scroll con rueda: forzamos slideNext/slidePrev
+  // ✅ Scroll logic corregida
   useEffect(() => {
     const el = wrapperRef.current;
     if (!el) return;
@@ -32,8 +31,25 @@ const AlbumList: React.FC<AlbumListProps> = ({
     let locked = false;
 
     const onWheel = (e: WheelEvent) => {
-      // Si estás sobre el carrusel, consumimos el wheel
-      e.preventDefault();
+      // 1. Detectamos sobre qué elemento está el ratón
+      const target = e.target as HTMLElement;
+
+      // 2. Verificamos si estamos intentando hacer scroll dentro de la lista de canciones
+      // Buscamos si el elemento target tiene un ancestro con la clase .back
+      const isInsideBack = target.closest('.back');
+
+      // 3. LA CORRECCIÓN:
+      // Si hay un álbum seleccionado Y el ratón está sobre la parte trasera...
+      if (selectedAlbumId && isInsideBack) {
+        // ... NO ejecutamos e.preventDefault().
+        // Esto permite que el navegador haga scroll en la lista de canciones.
+        // Y hacemos return para no mover el Swiper.
+        return; 
+      }
+
+      // --- Si no estamos en la lista, comportamiento normal del carrusel ---
+      
+      e.preventDefault(); // Bloquea el scroll de la página
 
       if (!swiperRef.current) return;
       if (locked) return;
@@ -43,19 +59,18 @@ const AlbumList: React.FC<AlbumListProps> = ({
       if (e.deltaY > 0) swiperRef.current.slideNext();
       else swiperRef.current.slidePrev();
 
-      // throttle para que no vaya a mil por hora
       setTimeout(() => {
         locked = false;
       }, 250);
     };
 
-    // importante: passive:false para poder hacer preventDefault
+    // passive: false es obligatorio para poder usar preventDefault
     el.addEventListener("wheel", onWheel, { passive: false });
 
     return () => {
       el.removeEventListener("wheel", onWheel as any);
     };
-  }, []);
+  }, [selectedAlbumId]); // ⚠️ IMPORTANTE: Añadimos selectedAlbumId a las dependencias
 
   return (
     <div className="albums-wrapper" ref={wrapperRef}>
@@ -65,8 +80,10 @@ const AlbumList: React.FC<AlbumListProps> = ({
         effect="coverflow"
         centeredSlides
         slidesPerView="auto"
-        grabCursor
+        grabCursor={!selectedAlbumId} // Tip visual: quitamos la manita de arrastre si hay un album abierto
         speed={450}
+        // Deshabilitar el slide con ratón si hay un álbum abierto para evitar conflictos
+        allowTouchMove={!selectedAlbumId} 
         coverflowEffect={{
           rotate: 25,
           stretch: 0,
@@ -81,6 +98,7 @@ const AlbumList: React.FC<AlbumListProps> = ({
             <div
               className="album-container"
               onClick={(e) => {
+                // Si haces click en el contenedor general, giramos
                 e.stopPropagation();
                 onAlbumClick(album);
               }}
@@ -97,7 +115,9 @@ const AlbumList: React.FC<AlbumListProps> = ({
                       ? `url(${album.cover_url})`
                       : undefined,
                   }}
-                />
+                >
+                    {/* Aquí podrías poner el botón de flip que hicimos antes si quieres */}
+                </div>
 
                 <div className="back">
                   <ul className="song-list">
@@ -105,6 +125,8 @@ const AlbumList: React.FC<AlbumListProps> = ({
                       <li
                         key={song.id}
                         onClick={(e) => {
+                          // Importante: detener la propagación para que el click en la canción
+                          // no se detecte como click en el álbum y lo cierre/gire.
                           e.stopPropagation();
                           onSongClick(song);
                         }}

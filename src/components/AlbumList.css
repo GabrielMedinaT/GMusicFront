@@ -1,58 +1,67 @@
 @import "swiper/css";
 @import "swiper/css/effect-coverflow";
 
-/* CONTENEDOR: le damos escenario real grande */
+/* =========================
+   CONTENEDOR PRINCIPAL
+   ========================= */
 .albums-wrapper {
   width: 100vw;
-  height: 78vh;              /* más alto = más grande */
+  /* Restamos espacio para que el reproductor no tape los discos */
+  height: calc(100vh - 100px); 
   display: flex;
   justify-content: center;
   align-items: center;
   overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 
-/* SWIPER ocupa todo el escenario */
+/* SWIPER */
 .album-swiper {
   width: 100%;
   height: 100%;
+  padding-top: 20px; /* Un poco de aire arriba */
 }
 
 .swiper-wrapper {
   align-items: center;
 }
 
-/* SLIDES: tamaño grande real */
+/* =========================
+   SLIDES (TAMAÑO BASE DE ESCRITORIO)
+   ========================= */
 .swiper-slide {
-  width: 520px !important;
-  height: 520px !important;
+  /* Tamaño un poco más contenido para laptops */
+  width: 450px !important; 
+  height: 450px !important;
   display: flex;
   justify-content: center;
   align-items: center;
+  transition: transform 0.3s ease;
 }
 
-/* el activo se siente más “Apple” */
+/* El activo resalta suavemente */
 .swiper-slide-active {
-  transform: scale(1.18);
   z-index: 10;
+  /* El efecto de escala lo maneja el effect-coverflow, 
+     pero podemos añadir un extra si queremos */
 }
 
-/* contenedor del álbum */
+/* =========================
+   ALBUM (FLIP CARD)
+   ========================= */
 .album-container {
   width: 100%;
   height: 100%;
   perspective: 1200px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
-/* flip */
 .album {
   width: 100%;
   height: 100%;
   position: relative;
   transform-style: preserve-3d;
-  transition: transform 0.8s ease;
+  transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Efecto rebote suave */
   cursor: pointer;
 }
 
@@ -60,57 +69,165 @@
   transform: rotateY(180deg);
 }
 
-/* FRONT */
+/* =========================
+   CARA FRONTAL (PORTADA)
+   ========================= */
 .album .front {
   position: absolute;
   inset: 0;
   background-size: cover;
   background-position: center;
-  border-radius: 16px;
+  border-radius: 12px;
   backface-visibility: hidden;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65);
+  /* Sombra elegante, no negra pura */
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* REFLEJO */
+/* REFLEJO (Sutil y elegante) */
 .album .front::after {
   content: "";
   position: absolute;
   top: 100%;
   left: 0;
   width: 100%;
-  height: 38%;
+  height: 40%;
   background-image: inherit;
   background-size: cover;
   background-position: center;
   transform: scaleY(-1);
-  opacity: 0.22;
-  filter: blur(2px);
-  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.55), transparent);
+  opacity: 0.15; /* Menos opacidad para que no moleste */
+  filter: blur(4px);
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent 70%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent 70%);
+  pointer-events: none;
 }
 
-/* BACK */
+/* =========================
+   CARA TRASERA (LISTA CANCIONES)
+   ========================= */
 .album .back {
   position: absolute;
   inset: 0;
-  background: #111;
-  color: wheat;
-  border-radius: 16px;
+  /* Fondo estilo Glassmorphism (igual que el player) */
+  background: rgba(25, 25, 25, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  
+  color: #e0e0e0; /* Blanco suave, no wheat */
+  border-radius: 12px;
   transform: rotateY(180deg);
   backface-visibility: hidden;
-  padding: 20px;
+  padding: 25px;
   overflow-y: auto;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+}
+
+/* Scrollbar fina para la lista */
+.album .back::-webkit-scrollbar {
+  width: 4px;
+}
+.album .back::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 4px;
 }
 
 .song-list {
+  margin-top: 5%;
   list-style: none;
+  font-size: 0.95rem;
 }
 
 .song-list li {
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.15);
-  cursor: pointer;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: space-between;
 }
 
+/* HOVER ELEGANTE */
 .song-list li:hover {
-  color: #1db954;
+  color: #ffb13d; /* Naranja del reproductor */
+  padding-left: 5px; /* Pequeño desplazamiento */
+  border-bottom-color: rgba(255, 177, 61, 0.3);
+}
+
+.song-list li:last-child {
+  border-bottom: none;
+}
+
+/* =======================================================
+   MEDIA QUERIES (RESPONSIVO REAL)
+   ======================================================= */
+
+/* 1. TABLETS Y PANTALLAS PEQUEÑAS */
+@media (max-width: 1024px) {
+  .swiper-slide {
+    width: 350px !important;
+    height: 350px !important;
+  }
+}
+
+/* 2. MÓVIL VERTICAL (PORTRAIT) */
+@media (max-width: 600px) {
+  .albums-wrapper {
+    /* Dejamos más espacio abajo para el player en móvil */
+    height: calc(100vh - 140px);
+    align-items: flex-start; /* Subir los discos un poco */
+    padding-top: 40px;
+  }
+
+  .swiper-slide {
+    width: 280px !important;
+    height: 280px !important;
+  }
+
+  .album .front::after {
+    opacity: 0.1; /* Reflejo casi invisible en móvil */
+    height: 20%;
+  }
+  
+  .album .back {
+    padding: 15px;
+  }
+  
+  .song-list li {
+    padding: 10px 0;
+    font-size: 0.85rem;
+  }
+}
+
+/* 3. MÓVIL HORIZONTAL (LANDSCAPE) - EL MÁS IMPORTANTE */
+@media (max-height: 500px) and (orientation: landscape) {
+  .albums-wrapper {
+    /* Ajuste crítico: Restamos la altura de la barra horizontal */
+    height: calc(100vh - 60px); 
+    padding-top: 10px;
+  }
+
+  /* Los discos deben ser pequeños para caber */
+  .swiper-slide {
+    width: 220px !important;
+    height: 220px !important;
+  }
+
+  .album .front {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Ocultar reflejo en landscape para ganar rendimiento y espacio */
+  .album .front::after {
+    display: none;
+  }
+
+  .album .back {
+    padding: 10px;
+    font-size: 0.8rem;
+  }
+  
+  .song-list li {
+    padding: 5px 0;
+  }
 }
